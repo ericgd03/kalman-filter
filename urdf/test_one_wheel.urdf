@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<robot name="puzzlebot">
+
+  <!-- base_link con malla -->
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://mini_challenge_3/meshes/Puzzlebot_Jetson_Lidar_Edition_Base.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="gray">
+        <color rgba="0.5 0.5 0.5 1.0"/>
+      </material>
+    </visual>
+  </link>
+
+  <!-- rueda derecha -->
+  <link name="wheel_r_link">
+    <visual>
+      <origin xyz="0.052 -0.095 -0.0025" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://mini_challenge_3/meshes/Puzzlebot_Wheel.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="green">
+        <color rgba="0.2 0.8 0.2 1.0"/>
+      </material>
+    </visual>
+  </link>
+
+  <!-- joint fijo -->
+  <joint name="base_to_wheel_r" type="fixed">
+    <parent link="base_link"/>
+    <child link="wheel_r_link"/>
+    <origin xyz="0.052 -0.095 -0.0025" rpy="0 0 0"/>
+  </joint>
+
+</robot>

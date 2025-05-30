@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<robot name="puzzlebot" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <!-- base_link con malla -->
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://mini_challenge_5/meshes/Puzzlebot_Jetson_Lidar_Base.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="blue">
+          <color rgba="0.3 0.4 0.8 1.0"/>
+      </material>
+    </visual>
+  </link>
+
+  <!-- rueda izquierda -->
+  <link name="wheel_l_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://mini_challenge_5/meshes/Puzzlebot_Wheel.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="white">
+          <color rgba="0.95 0.95 0.85 1.0"/>
+      </material>
+    </visual>
+  </link>
+
+  <!-- rueda derecha -->
+  <link name="wheel_r_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://mini_challenge_5/meshes/Puzzlebot_Wheel.stl" scale="1 -1 1"/>
+      </geometry>
+      <material name="white">
+          <color rgba="0.95 0.95 0.85 1.0"/>
+      </material>
+    </visual>
+  </link>
+
+  <!-- caster -->
+  <link name="caster_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://mini_challenge_5/meshes/Puzzlebot_Caster_Wheel.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="white_1">
+          <color rgba="0.9 0.9 0.9 1.0"/>
+      </material>
+    </visual>
+  </link>
+
+<!-- rueda izquierda -->
+<joint name="base_to_wheel_l" type="continuous">
+  <parent link="base_link"/>
+  <child link="wheel_l_link"/>
+  <origin xyz="0.052 0.095 -0.0025" rpy="0 1.57 0"/>
+  <axis xyz="0 1 0"/>
+</joint>
+
+<!-- rueda derecha -->
+<joint name="base_to_wheel_r" type="continuous">
+  <parent link="base_link"/>
+  <child link="wheel_r_link"/>
+  <origin xyz="0.052 -0.095 -0.0025" rpy="0 1.57 0"/>
+  <axis xyz="0 1 0"/>
+</joint>
+
+
+  <joint name="base_to_caster" type="fixed">
+    <parent link="base_link"/>
+    <child link="caster_link"/>
+    <origin xyz="-0.095 0.0 -0.04" rpy="0 0 0"/>
+  </joint>
+
+</robot>
