@@ -117,8 +117,9 @@ class ControlNode(Node):
         # self.get_logger().info(
         #     f"[Fase {self.phase}] cmd_vel → linear.x: {twist.linear.x:.3f}, angular.z: {twist.angular.z:.3f}"
         # )
-        # twist.linear.x = 1.0
-        # twist.angular.z = 1.0
+
+        # twist.linear.x = 0.5
+        # twist.angular.z = 0.5
 
         self.cmd_vel_pub.publish(twist)
 

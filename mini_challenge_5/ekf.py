@@ -30,8 +30,8 @@ class ExtendedKalmanFilter(Node):
         self.last_time = self.get_clock().now().nanoseconds / 1e9
 
         # Parámetros del robot
-        self.R = 0.05       # radio de la rueda [m]
-        self.L = 0.19       # distancia entre ruedas [m]
+        self.R = 0.05  # radio de la rueda [m]
+        self.L = 0.19  # distancia entre ruedas [m]
 
         # Suscripciones a velocidades de rueda
         self.create_subscription(Float64, '/wl', self.wl_callback, 10)
@@ -56,14 +56,15 @@ class ExtendedKalmanFilter(Node):
         self.estimated_covariance_matrix = self.covariance_matrix
 
         self.estimated_measurement = np.zeros((2, 1))
-        self.landmark_position = [[-0.5], [1]]
+        self.measurement = np.zeros((2, 1))
+
+        self.landmark_position = [[-0.5], [1]] # Waypoints
+        # self.landmark_position = [[-1.5], [1.5]] # Circle
 
         self.Q_k = np.zeros((3, 3)) # Motion model covariance matrix
 
         self.R_k = [[0.1, 0], # Observation model covariance matrix
                     [0, 0.02]]
-
-        self.measurement = np.zeros((2, 1))
 
         self.linear_velocity = 0.0
         self.angular_velocity = 0.0
@@ -90,22 +91,26 @@ class ExtendedKalmanFilter(Node):
 
         self.aruco = True
 
-        self.get_logger().info(f'Measured -> Distance: {self.measurement[0][0]:.2f} m | Angle: {self.measurement[1][0]:.2f} rad')
-        self.get_logger().info(f'Estimated -> Distance: {self.estimated_measurement[0][0]:.2f} m | Angle: {self.estimated_measurement[1][0]:.2f} rad')
+        # self.get_logger().info(f'Measured -> Distance: {self.measurement[0][0]:.2f} m | Angle: {self.measurement[1][0]:.2f} rad')
+        # self.get_logger().info(f'Estimated -> Distance: {self.estimated_measurement[0][0]:.2f} m | Angle: {self.estimated_measurement[1][0]:.2f} rad')
 
     def check_aruco_timeout(self):
 
         # If time since last ArUco > 1 second, mark it as not visible
         now = self.get_clock().now()
-        if (now - self.last_aruco_time) > Duration(seconds=0.2):
+        if (now - self.last_aruco_time) > Duration(seconds=self.timer_period):
             self.aruco = False
         # pass
+
+    def normalize_angle(self, angle):
+        
+        return (angle + np.pi) % (2 * np.pi) - np.pi
 
     def calculate_estimated_position(self):
 
         self.estimated_position = [[self.current_position[0][0] + self.timer_period * self.linear_velocity * np.cos(self.current_position[2][0])],
                                    [self.current_position[1][0] + self.timer_period * self.linear_velocity * np.sin(self.current_position[2][0])],
-                                   [self.current_position[2][0] + self.timer_period * self.angular_velocity]]
+                                   [self.normalize_angle(self.current_position[2][0] + self.timer_period * self.angular_velocity)]]
 
     def calculate_linearized_model(self):
 
@@ -115,8 +120,8 @@ class ExtendedKalmanFilter(Node):
 
     def calculate_Qk(self):
 
-        kr = 1.0
-        kl = 1.0
+        kr = 0.5
+        kl = 0.5
 
         sigma = [[kr * abs(self.wr), 0],
                  [0, kl * abs(self.wl)]]
@@ -144,6 +149,8 @@ class ExtendedKalmanFilter(Node):
         delta_x = self.landmark_position[0][0] - self.estimated_position[0][0]
         delta_y = self.landmark_position[1][0] - self.estimated_position[1][0]
         p = (delta_x ** 2) + (delta_y ** 2)
+
+        # self.get_logger().info(f"Estimated --> dx: {delta_x:.2f} | dy: {delta_y:.2f}")
 
         self.estimated_measurement = [[np.sqrt(p)],
                                       [np.arctan2(delta_y, delta_x) - self.estimated_position[2][0]]]
@@ -209,10 +216,7 @@ class ExtendedKalmanFilter(Node):
         else:
 
             self.current_position = self.estimated_position
-            self.covariance_matrix = self.estimated_covariance_matrix
-
-        # print("\nCovariance matrix\n")
-        # print(self.covariance_matrix)
+            self.covariance_matrix = self.estimated_covariance_matrix 
 
     def timer_callback(self):
 
@@ -225,17 +229,17 @@ class ExtendedKalmanFilter(Node):
         self.angular_velocity = self.R * (self.wr - self.wl) / self.L
 
         # Convertir a cuaternión
-        quat = transforms3d.euler.euler2quat(0, 0, self.estimated_position[2][0])
+        quat = transforms3d.euler.euler2quat(0, 0, self.current_position[2][0])
 
-        self.ekf_loop()
+        self.ekf_loop() # Kalman filter
 
         # Publicar TF dinámico: odom → base_footprint
         td = TransformStamped()
         td.header.stamp = self.get_clock().now().to_msg()
         td.header.frame_id = 'odom'
         td.child_frame_id = 'base_footprint'
-        td.transform.translation.x = self.estimated_position[0][0]
-        td.transform.translation.y = self.estimated_position[1][0]
+        td.transform.translation.x = self.current_position[0][0]
+        td.transform.translation.y = self.current_position[1][0]
         td.transform.translation.z = 0.0
         td.transform.rotation.x = quat[1]
         td.transform.rotation.y = quat[2]
@@ -248,8 +252,8 @@ class ExtendedKalmanFilter(Node):
         odom.header.stamp = td.header.stamp
         odom.header.frame_id = 'odom'
         odom.child_frame_id = 'base_footprint'
-        odom.pose.pose.position.x = self.estimated_position[0][0]
-        odom.pose.pose.position.y = self.estimated_position[1][0]
+        odom.pose.pose.position.x = self.current_position[0][0]
+        odom.pose.pose.position.y = self.current_position[1][0]
         odom.pose.pose.position.z = 0.0
         odom.pose.pose.orientation = td.transform.rotation
         odom.twist.twist.linear.x = self.linear_velocity
@@ -260,12 +264,12 @@ class ExtendedKalmanFilter(Node):
         # a XY y yaw para una representación en rviz en 2D
         cov6 = np.zeros((6, 6))
         # Posición XY
-        cov6[0, 0] = self.estimated_covariance_matrix[0, 0]
-        cov6[0, 1] = self.estimated_covariance_matrix[0, 1]
-        cov6[1, 0] = self.estimated_covariance_matrix[1, 0]
-        cov6[1, 1] = self.estimated_covariance_matrix[1, 1]
+        cov6[0, 0] = self.covariance_matrix[0, 0]
+        cov6[0, 1] = self.covariance_matrix[0, 1]
+        cov6[1, 0] = self.covariance_matrix[1, 0]
+        cov6[1, 1] = self.covariance_matrix[1, 1]
         # Yaw (rotación Z)
-        cov6[5, 5] = self.estimated_covariance_matrix[2, 2]
+        cov6[5, 5] = self.covariance_matrix[2, 2]
         odom.pose.covariance = cov6.flatten().tolist()
 
         self.odom_publisher.publish(odom)

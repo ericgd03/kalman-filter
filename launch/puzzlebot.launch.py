@@ -53,9 +53,10 @@ def generate_launch_description():
     aruco_transform = Node(
                         package='tf2_ros',
                         executable='static_transform_publisher',
-                        arguments = ['--x', '0.0', '--y', '1.5', '--z', '0.0',
+                        arguments = ['--x', '0', '--y', '1.5', '--z', '0.0',
                                      '--yaw', '0.0', '--pitch', '0.0', '--roll', '0.0',
                                      '--frame-id', 'map', '--child-frame-id', 'aruco_marker']
+                                    # 0, 1.5 | -1, 2
                         )
 
     with open(urdf_path, 'r') as infp:

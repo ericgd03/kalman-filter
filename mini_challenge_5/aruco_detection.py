@@ -3,7 +3,6 @@ from rclpy.node import Node
 from geometry_msgs.msg import Vector3
 import tf2_ros
 import numpy as np
-import transforms3d
 
 class ArucoRelativePose(Node):
 
@@ -34,14 +33,14 @@ class ArucoRelativePose(Node):
 
             if distance <= max_distance and abs(angle) <= fov_angle / 2:
 
+                # self.get_logger().info(f"Measured --> dx: {dx:.2f} | dy: {dy:.2f}")
+
                 msg = Vector3()
                 msg.x = distance
                 msg.y = angle
                 msg.z = 0.0  # Unused
 
                 self.pose_publisher.publish(msg)
-
-                # self.get_logger().info(f'Distance: {distance:.2f} m | Angle: {math.degrees(angle):.2f} deg')
 
         except Exception as e:
             self.get_logger().warn(f'No transform found: {e}')
