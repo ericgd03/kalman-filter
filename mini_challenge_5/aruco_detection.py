@@ -1,5 +1,6 @@
 import rclpy
 from rclpy.node import Node
+from std_msgs.msg import Int32
 from geometry_msgs.msg import Vector3
 import tf2_ros
 import numpy as np
@@ -15,12 +16,15 @@ class ArucoRelativePose(Node):
 
         self.timer = self.create_timer(0.1, self.timer_callback)  # 10 Hz
         self.pose_publisher = self.create_publisher(Vector3, '/aruco_relative_pos', 10)
+        self.aruco_number_publisher = self.create_publisher(Int32, '/aruco_number', 10)
+
+        self.aruco_number = 3
 
     def timer_callback(self):
 
         try:
             now = rclpy.time.Time()
-            trans = self.tf_buffer.lookup_transform('base_link', 'aruco_marker', now)
+            trans = self.tf_buffer.lookup_transform('base_link', ('aruco_' + str(self.aruco_number)), now)
 
             dx = trans.transform.translation.x
             dy = trans.transform.translation.y
@@ -38,9 +42,13 @@ class ArucoRelativePose(Node):
                 msg = Vector3()
                 msg.x = distance
                 msg.y = angle
-                msg.z = 0.0  # Unused
+                msg.z = 0.0 # Unused
+
+                aruco_msg = Int32()
+                aruco_msg.data = self.aruco_number
 
                 self.pose_publisher.publish(msg)
+                self.aruco_number_publisher.publish(aruco_msg)
 
         except Exception as e:
             self.get_logger().warn(f'No transform found: {e}')

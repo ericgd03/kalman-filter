@@ -50,14 +50,21 @@ def generate_launch_description():
                                             '--frame-id', 'base_link', '--child-frame-id', 'base_laser']
                                 )
 
-    aruco_transform = Node(
-                        package='tf2_ros',
-                        executable='static_transform_publisher',
-                        arguments = ['--x', '0', '--y', '1.5', '--z', '0.0',
-                                     '--yaw', '0.0', '--pitch', '0.0', '--roll', '0.0',
-                                     '--frame-id', 'map', '--child-frame-id', 'aruco_marker']
-                                    # 0, 1.5 | -1, 2
-                        )
+    aruco_3 = Node(
+                package='tf2_ros',
+                executable='static_transform_publisher',
+                arguments = ['--x', '0', '--y', '1.5', '--z', '0.0',
+                                '--yaw', '0.0', '--pitch', '0.0', '--roll', '0.0',
+                                '--frame-id', 'map', '--child-frame-id', 'aruco_3']
+                )
+    
+    aruco_4 = Node(
+                package='tf2_ros',
+                executable='static_transform_publisher',
+                arguments = ['--x', '-1', '--y', '2', '--z', '0.0',
+                                '--yaw', '0.0', '--pitch', '0.0', '--roll', '0.0',
+                                '--frame-id', 'map', '--child-frame-id', 'aruco_4']
+                )
 
     with open(urdf_path, 'r') as infp:
         robot_description = infp.read()
@@ -69,7 +76,8 @@ def generate_launch_description():
         static_transform_node_1,
         static_transform_node_2,
         static_transform_node_3,
-        aruco_transform,
+        aruco_3,
+        aruco_4,
         
         # Publica el URDF
         Node(

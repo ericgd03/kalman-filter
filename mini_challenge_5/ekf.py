@@ -5,7 +5,7 @@ from rclpy.duration import Duration
 from tf2_ros import TransformBroadcaster, StaticTransformBroadcaster
 from geometry_msgs.msg import TransformStamped, Vector3
 from nav_msgs.msg import Odometry
-from std_msgs.msg import Float64
+from std_msgs.msg import Float64, Int32
 import numpy as np
 from numpy.linalg import inv
 import transforms3d
@@ -37,6 +37,7 @@ class ExtendedKalmanFilter(Node):
         self.create_subscription(Float64, '/wl', self.wl_callback, 10)
         self.create_subscription(Float64, '/wr', self.wr_callback, 10)
         self.create_subscription(Vector3, '/aruco_relative_pos', self.aruco_callback, 10)
+        self.create_subscription(Int32, '/aruco_number', self.aruco_number_callback, 10)
 
         # Publicar transforms estáticos (si aplica)
         self.publish_static_transforms()
@@ -58,7 +59,7 @@ class ExtendedKalmanFilter(Node):
         self.estimated_measurement = np.zeros((2, 1))
         self.measurement = np.zeros((2, 1))
 
-        self.landmark_position = [[-0.5], [1]] # Waypoints
+        # self.landmark_position = [[-0.5], [1]] # Waypoints
         # self.landmark_position = [[-1.5], [1.5]] # Circle
 
         self.Q_k = np.zeros((3, 3)) # Motion model covariance matrix
@@ -71,6 +72,17 @@ class ExtendedKalmanFilter(Node):
 
         self.aruco = False
         self.last_aruco_time = self.get_clock().now()
+
+        self.aruco_number = 0
+        self.arucos = {0: [[], []],
+                       1: [[], []],
+                       2: [[], []],
+                       3: [[-0.5], [1.0]], # Simulated aruco waypoints
+                       4: [[-1.5], [1.5]], # Simulated aruco circle
+                       5: [[], []],
+                       6: [[], []],
+                       7: [[], []],
+                       8: [[], []]}
 
     def wl_callback(self, msg):
         self.wl = msg.data
@@ -93,6 +105,12 @@ class ExtendedKalmanFilter(Node):
 
         # self.get_logger().info(f'Measured -> Distance: {self.measurement[0][0]:.2f} m | Angle: {self.measurement[1][0]:.2f} rad')
         # self.get_logger().info(f'Estimated -> Distance: {self.estimated_measurement[0][0]:.2f} m | Angle: {self.estimated_measurement[1][0]:.2f} rad')
+
+    def aruco_number_callback(self, msg):
+
+        self.aruco_number = msg.data
+        # self.get_logger().info(f"Aruco number: {self.aruco_number}")
+        # self.get_logger().info(f"Aruco position: \n{self.arucos[self.aruco_number]}")
 
     def check_aruco_timeout(self):
 
@@ -146,8 +164,8 @@ class ExtendedKalmanFilter(Node):
 
     def calculate_estimated_measurement(self): # Observation model
 
-        delta_x = self.landmark_position[0][0] - self.estimated_position[0][0]
-        delta_y = self.landmark_position[1][0] - self.estimated_position[1][0]
+        delta_x = self.arucos[self.aruco_number][0][0] - self.estimated_position[0][0]
+        delta_y = self.arucos[self.aruco_number][1][0] - self.estimated_position[1][0]
         p = (delta_x ** 2) + (delta_y ** 2)
 
         # self.get_logger().info(f"Estimated --> dx: {delta_x:.2f} | dy: {delta_y:.2f}")
@@ -157,8 +175,8 @@ class ExtendedKalmanFilter(Node):
 
     def calculate_linearized_observation_model(self):
 
-        delta_x = self.landmark_position[0][0] - self.estimated_position[0][0]
-        delta_y = self.landmark_position[1][0] - self.estimated_position[1][0]
+        delta_x = self.arucos[self.aruco_number][0][0] - self.estimated_position[0][0]
+        delta_y = self.arucos[self.aruco_number][1][0] - self.estimated_position[1][0]
         p = (delta_x ** 2) + (delta_y ** 2)
 
         self.G = [[(-delta_x / np.sqrt(p)), (-delta_y / np.sqrt(p)), 0],
