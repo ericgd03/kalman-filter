@@ -15,8 +15,8 @@ class ArucoRelativePose(Node):
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
 
         self.timer = self.create_timer(0.1, self.timer_callback)  # 10 Hz
-        self.pose_publisher = self.create_publisher(Vector3, '/aruco_relative_pos', 10)
-        self.aruco_number_publisher = self.create_publisher(Int32, '/aruco_number', 10)
+        self.pose_publisher = self.create_publisher(Vector3, '/aruco_error', 10)
+        self.aruco_number_publisher = self.create_publisher(Int32, '/aruco_id', 10)
 
         self.aruco_number = 3
 

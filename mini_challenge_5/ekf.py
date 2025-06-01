@@ -14,7 +14,7 @@ class ExtendedKalmanFilter(Node):
 
     def __init__(self):
 
-        super().__init__('simple_tf_publisher')
+        super().__init__('kalman_filter_node')
 
         # Broadcasters y publisher de odometría
         self.static_broadcaster = StaticTransformBroadcaster(self)
@@ -34,10 +34,10 @@ class ExtendedKalmanFilter(Node):
         self.L = 0.19  # distancia entre ruedas [m]
 
         # Suscripciones a velocidades de rueda
-        self.create_subscription(Float64, '/wl', self.wl_callback, 10)
-        self.create_subscription(Float64, '/wr', self.wr_callback, 10)
-        self.create_subscription(Vector3, '/aruco_relative_pos', self.aruco_callback, 10)
-        self.create_subscription(Int32, '/aruco_number', self.aruco_number_callback, 10)
+        self.create_subscription(Float64, '/VelocityEncL', self.wl_callback, 10)
+        self.create_subscription(Float64, '/VelocityEncR', self.wr_callback, 10)
+        self.create_subscription(Vector3, '/aruco_error', self.aruco_callback, 10)
+        self.create_subscription(Int32, '/aruco_id', self.aruco_number_callback, 10)
 
         # Publicar transforms estáticos (si aplica)
         self.publish_static_transforms()
@@ -103,8 +103,8 @@ class ExtendedKalmanFilter(Node):
 
         self.aruco = True
 
-        # self.get_logger().info(f'Measured -> Distance: {self.measurement[0][0]:.2f} m | Angle: {self.measurement[1][0]:.2f} rad')
-        # self.get_logger().info(f'Estimated -> Distance: {self.estimated_measurement[0][0]:.2f} m | Angle: {self.estimated_measurement[1][0]:.2f} rad')
+        self.get_logger().info(f'Measured -> Distance: {self.measurement[0][0]:.2f} m | Angle: {self.measurement[1][0]:.2f} rad')
+        self.get_logger().info(f'Estimated -> Distance: {self.estimated_measurement[0][0]:.2f} m | Angle: {self.estimated_measurement[1][0]:.2f} rad')
 
     def aruco_number_callback(self, msg):
 
@@ -138,8 +138,8 @@ class ExtendedKalmanFilter(Node):
 
     def calculate_Qk(self):
 
-        kr = 0.5
-        kl = 0.5
+        kr = 0.1
+        kl = 0.1
 
         sigma = [[kr * abs(self.wr), 0],
                  [0, kl * abs(self.wl)]]

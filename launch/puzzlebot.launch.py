@@ -76,8 +76,8 @@ def generate_launch_description():
         static_transform_node_1,
         static_transform_node_2,
         static_transform_node_3,
-        aruco_3,
-        aruco_4,
+        # aruco_3,
+        # aruco_4,
         
         # Publica el URDF
         Node(
@@ -88,7 +88,7 @@ def generate_launch_description():
             output='screen'
         ),
 
-        # Nodo con dead reckoning
+        # Nodo con dead reckoning y filtro de kalman
         Node(
             package=package_name,
             executable='ekf',
@@ -96,21 +96,21 @@ def generate_launch_description():
             output='screen'
         ),
 
-        # Aruco detection node
-        Node(
-            package=package_name,
-            executable='aruco_detection',
-            name='aruco_detection',
-            output='screen'
-        ),
+        # # Aruco detection node
+        # Node(
+        #     package=package_name,
+        #     executable='aruco_detection',
+        #     name='aruco_detection',
+        #     output='screen'
+        # ),
 
-        # Nodo que simula el comportamiento físico de un robot diferencial. 
-        Node(
-            package=package_name,
-            executable='rs_robot',
-            name='real_sim_robot',
-            output='screen'
-        ),
+        # # Nodo que simula el comportamiento físico de un robot diferencial. 
+        # Node(
+        #     package=package_name,
+        #     executable='rs_robot',
+        #     name='real_sim_robot',
+        #     output='screen'
+        # ),
 
         # Nodo controlador proporcional dividido en fases.
         Node(
